@@ -32,13 +32,43 @@ The lab simulates a small enterprise network with a domain controller, Splunk in
 - Splunk Universal Forwarder + Splunk indexer
 - Atomic Red Team (attack simulation)
 
-## 4. Build Process
-- AD DS setup (domain controller promotion)
-- Client domain join
-- Sysmon deployment + config used (SwiftOnSecurity config)
-- Splunk Universal Forwarder + inputs.conf configuration
-- Troubleshooting moment: crashed server → rebuild → DNS trust relationship issue
+## Build Process
 
+### Active Directory Domain Services (AD DS) Setup
+- Installed Windows Server 2022 and promoted it to a Domain Controller using AD DS
+  <img width="1600" height="774" alt="image" src="https://github.com/user-attachments/assets/5c879af1-dcd8-46c0-a712-0f435e19c5df" />
+
+- Created the domain `mubbyspark1.local`
+  <img width="3822" height="1657" alt="Screenshot 2026-07-14 032223" src="https://github.com/user-attachments/assets/d0d559cd-eab7-4c93-8b05-b7bd4cb602af" />
+
+- Configured static IP `192.168.10.7` for the DC to ensure DNS resolution stayed consistent across reboots
+<img width="3202" height="1147" alt="Screenshot 2026-07-14 033317" src="https://github.com/user-attachments/assets/1f9e97e2-ac67-4e2a-992d-f304161941e6" />
+
+### Client Domain Join
+- Deployed a Windows 10 client on the same subnet (`192.168.10.0/24`)
+  <img width="3802" height="1490" alt="image" src="https://github.com/user-attachments/assets/f869f8d0-12ce-4b7e-82e0-e5f349339584" />
+
+- Joined the client to the `mubbyspark1.local` domain
+- Verified domain join by confirming the client appeared under **Active Directory Users and Computers**
+
+### Sysmon Deployment
+- Installed Sysmon on both the Domain Controller and the Windows 10 client for detailed endpoint telemetry (process creation, network connections, etc.)
+- Used the [SwiftOnSecurity Sysmon config](https://github.com/SwiftOnSecurity/sysmon-config) as a base configuration, since it provides solid default coverage for common attacker behaviors without excessive noise
+
+### Splunk Universal Forwarder Setup
+- Installed the Splunk Universal Forwarder on the DC and the Windows 10 client
+- Configured `inputs.conf` to forward:
+  - Windows Security Event Logs
+  - Sysmon Event Logs
+- Pointed forwarders to the Splunk indexer at `192.168.10.10`
+- Confirmed data ingestion in Splunk via `index=* | stats count by host`
+
+### Troubleshooting: Server Crash → Rebuild → DNS Trust Relationship Issue
+- Mid-build, the Domain Controller crashed and had to be rebuilt
+- After rebuild, the Windows 10 client lost its trust relationship with the domain (a common symptom after a DC rebuild, since the client's stored machine account credentials no longer matched the "new" DC)
+- Diagnosed the issue by checking DNS resolution from the client (`nslookup mubbyspark1.local`) and confirming the client couldn't properly resolve/authenticate against the rebuilt DC
+- Resolved by [rejoining the client to the domain / resetting the machine account trust — fill in your actual fix here]
+  
 ## 5. Attack Simulation #1 — Brute Force
 - What you did (method/tool used)
 - What you saw in Splunk (screenshot, search query, Event ID 4625)
