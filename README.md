@@ -91,13 +91,35 @@ The lab simulates a small enterprise network with a domain controller, Splunk in
 - Resolved by removing the client from the domain and rejoining it to `mubbyspark1.local`, which re-established a valid trust relationship with the rebuilt DC
   
 ## 5. Attack Simulation #1 — Brute Force
-- What you did (method/tool used)
-- What you saw in Splunk (screenshot, search query, Event ID 4625)
-- Detection logic/alert built:
-  - Configured a scheduled Splunk alert to detect repeated 4625 (failed logon) events
-  - Screenshot of alert configuration (search query, trigger condition, schedule)
-  - Screenshot of the alert firing successfully in **Triggered Alerts** history, with timestamp
-  - Validated the detection pipeline (search → condition → trigger) end-to-end
+
+### Method
+- Used **Crowbar** on Kali Linux to perform a brute force attack against the domain-joined Windows 10 client
+- Configured a custom password list of 20 passwords, including the correct password within the list, to simulate a realistic brute force scenario against the target
+
+<!-- SCREENSHOT: password list file (e.g. passwords.txt) showing the 20 entries -->
+<img width="2065" height="1037" alt="image" src="https://github.com/user-attachments/assets/680e656e-d0b1-4148-8e48-083cf11ba802" />
+
+<!-- SCREENSHOT: Crowbar running in terminal, showing the command/flags and attack in progress -->
+<img width="2932" height="275" alt="image" src="https://github.com/user-attachments/assets/863c5564-85b4-42b3-9ab4-ebf84584705a" />
+
+### Detection in Splunk
+- Failed and successful login attempts were captured via Windows Security Event Logs, forwarded through the Splunk Universal Forwarder
+- Queried Splunk for **Event ID 4625** (failed logon) to confirm the brute force attempts were being logged
+- Search query used: `index=* EventCode=4625 | table _time, host, Account_Name, Failure_Reason`
+
+<!-- SCREENSHOT 2: Splunk search results showing the raw 4625 events -->
+![Splunk 4625 Search Results](images/splunk-4625-results.png)
+
+### Detection Logic / Alert Built
+- Configured a scheduled Splunk alert to detect repeated 4625 (failed logon) events
+
+<!-- SCREENSHOT 3: Alert configuration screen (search query, trigger condition, schedule) -->
+![Splunk Alert Configuration](images/splunk-alert-config.png)
+
+- Validated the detection pipeline (search → condition → trigger) end-to-end by confirming the alert fired successfully
+
+<!-- SCREENSHOT 4: Triggered Alerts history showing the alert fired with a timestamp -->
+![Splunk Triggered Alert](images/splunk-triggered-alert.png)
 
 ## 6. Attack Simulation #2 — Atomic Red Team
 - Techniques run (e.g., T1136.001 - account creation)
