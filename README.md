@@ -90,7 +90,7 @@ The lab simulates a small enterprise network with a domain controller, Splunk in
 - Diagnosed the issue by checking DNS resolution from the client (`nslookup mubbyspark1.local`) to confirm whether the client could properly resolve and communicate with the rebuilt DC
 - Resolved by removing the client from the domain and rejoining it to `mubbyspark1.local`, which re-established a valid trust relationship with the rebuilt DC
   
-## 5. Attack Simulation #1 — Brute Force
+## Attack Simulation #1 — Brute Force
 
 ### Method
 - Used **Crowbar** on Kali Linux to perform a brute force attack against the domain-joined Windows 10 client
@@ -121,25 +121,58 @@ Triggered Alerts history showing the alert fired with a timestamp
 <img width="3820" height="1775" alt="image" src="https://github.com/user-attachments/assets/285676b8-5829-43ac-93ce-f79f0be062be" />
 
 
-## 6. Attack Simulation #2 — Atomic Red Team
-- Techniques run (e.g., T1136.001 - account creation)
-- Sample terminal output
-- Corresponding Splunk/Event Viewer detection (Event ID 4720, 4732, Sysmon Event ID 1)
-- Screenshot of raw events found
+## Attack Simulation #2 — Atomic Red Team
 
-## 7. Challenges & Troubleshooting
-- Domain rebuild issue, cached credentials, cryptography/DNS warnings during AD DS install
-- What happened and how you diagnosed it
-- Alert scheduling conflict: initial alert configuration used a real-time search window, which conflicted with cron-based scheduling (`rt time values are not allowed` error). Resolved by switching to a relative time range (`-5m` to `now`) with a standard cron schedule, which allowed the alert to trigger successfully
-- Scoped email delivery as a stretch goal; focused validation on confirming the core detection and alerting pipeline (search → trigger condition → fired alert) rather than the notification channel
+### Setup
+- Installed the Atomic Red Team PowerShell module on the Windows 10 client to enable running MITRE ATT&CK-mapped test techniques locally
 
-## 8. Key Takeaways / Lessons Learned
-- What you learned about AD trust relationships, Sysmon telemetry, log pipelines, detection engineering basics
-- Understanding of Splunk's alert scheduling model (real-time vs. cron-based search windows) and how they interact
+terminal output showing Atomic Red Team installation/import (e.g. Import-Module Invoke-AtomicRedTeam.psd1) confirming it loaded successfully 
+<img width="3822" height="1297" alt="image" src="https://github.com/user-attachments/assets/f200069c-e9eb-4291-9162-49a8b7789551" />
 
-## 9. Next Steps / Future Work
-- Additional MITRE ATT&CK techniques
-- Splunk alerts/dashboards
-- SIEM correlation rules
-- Completing email/notification delivery for alerts
-- Expanding to more clients
+
+### Technique Run
+- Executed **T1136.001 — Create Account: Local Account** using Atomic Red Team on the Windows 10 client, simulating an attacker creating a new local account for persistence
+
+terminal output from running the Atomic Red Team test (Invoke-AtomicTest T1136.001), showing the test executing and confirming success 
+<img width="3837" height="1952" alt="image" src="https://github.com/user-attachments/assets/2c5a3846-934e-4065-81f3-99d60de12eec" />
+
+
+### Detection in Splunk / Event Viewer
+- The account creation generated **Event ID 4720** (a user account was created) in the Windows Security Event Log
+- events were forwarded to Splunk via the Universal Forwarder and confirmed using the following search:
+
+ Splunk search results showing both the 4720 event and the Sysmon Event ID 1, with the new account name and command line visible -->
+<img width="3837" height="1982" alt="image" src="https://github.com/user-attachments/assets/c47e6302-8f77-4187-a2e2-135f5051e7f7" />
+
+
+## Challenges & Troubleshooting
+
+### Domain Controller Rebuild → Client Connectivity Issue
+- Mid-build, the Domain Controller crashed and had to be reconfigured/rebuilt
+- After reconfiguring the server, the Windows 10 client — originally joined to the old server instance — no longer connected properly to the rebuilt DC
+- Diagnosed the issue by checking DNS resolution from the client (`nslookup mubbyspark1.local`) to confirm whether it could properly resolve and communicate with the rebuilt DC
+- Resolved by removing the client from the domain and rejoining it to `mubbyspark1.local`, re-establishing a valid trust relationship
+
+### Splunk Alert Scheduling Conflict
+- Initial alert configuration used a real-time search window, which conflicted with cron-based scheduling (`rt time values are not allowed` error)
+- Resolved by switching to a relative time range (`-5m` to `now`) with a standard cron schedule (`* * * * *` during testing), which allowed the alert to trigger successfully
+- This highlighted a key detail in how Splunk's alerting engine handles real-time vs. scheduled search windows — a distinction that isn't obvious from default settings alone
+
+### Email Notification Delivery (Scoped as Stretch Goal)
+- Attempted to configure email delivery as the alert's trigger action, but was unable to confirm successful SMTP delivery within the project's time constraints
+- Focused validation instead on confirming the core detection and alerting pipeline end-to-end (search → trigger condition → fired alert), which is the more critical component of a working detection system
+- Email/notification delivery is documented as a next step (see Section 9)
+
+## Key Takeaways / Lessons Learned
+- Gained hands-on understanding of how AD trust relationships work between a domain controller and joined clients, including how a DC rebuild can break that relationship
+- Learned how Sysmon telemetry (combined with a modular, MITRE-aligned config like Olaf Hartong's) provides significantly more granular visibility than default Windows logging alone
+- Built practical experience with the full log pipeline: endpoint → Universal Forwarder → Splunk indexer → search/alerting
+- Learned Splunk's alert scheduling model in depth — specifically how real-time vs. cron-based search windows interact, and why they can conflict
+- Reinforced that a working detection pipeline (search → condition → trigger) is the core of alerting, and notification delivery (e.g. email) is a separate, secondary layer on top of it
+
+## Next Steps / Future Work
+- Complete email/notification delivery for alerts (SMTP configuration and validation)
+- Add detection coverage for additional MITRE ATT&CK techniques beyond T1136.001
+- Build out Splunk dashboards to visualize detections over time
+- Add correlation rules to reduce false positives and chain related events into a single higher-confidence alert
+- Expand the lab to include additional clients to simulate a more realistic multi-endpoint environment
