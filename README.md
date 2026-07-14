@@ -12,14 +12,25 @@
 - Build and validate a working Splunk alert to detect suspicious activity end-to-end
 - Troubleshoot real infrastructure issues as they came up — AD rebuild, DNS trust relationships, alert scheduling conflicts — rather than following a scripted walkthrough
 - 
-# Architecture / Lab Environment
-/your-repo
-  /images
-    architecture-diagram.png
-  README.md
-- Diagram showing: Windows Server (DC) ↔ Windows Client ↔ Splunk indexer
-- Tools used: Windows Server 2022, Sysmon, Splunk Universal Forwarder + Splunk indexer, Atomic Red Team
-- Network setup (IP scheme, domain name `mubbyspark1.local`, etc.)
+## Architecture / Lab Environment
+
+The lab simulates a small enterprise network with a domain controller, Splunk indexer, Windows 10 client, and an isolated attacker machine.
+
+<img width="600" height="453" alt="Home SOC Lab Architecture Diagram" src="https://github.com/user-attachments/assets/38804634-681d-4a09-a3ad-642c0b6e5c43" />
+
+**Network Setup:**
+- Domain: `mubbyspark1.local`
+- Network: `192.168.10.0/24`
+- Splunk server: `192.168.10.10`
+- Active Directory: `192.168.10.7`
+- Attacker machine: `192.168.10.250`
+
+**Tools used:**
+- Windows Server 2022 (Domain Controller)
+- Windows 10 (Domain-joined client)
+- Sysmon (endpoint telemetry)
+- Splunk Universal Forwarder + Splunk indexer
+- Atomic Red Team (attack simulation)
 
 ## 4. Build Process
 - AD DS setup (domain controller promotion)
