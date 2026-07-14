@@ -1,13 +1,22 @@
 # Home SOC Lab: AD + Sysmon + Splunk Detection Pipeline
 
-## 1. Title & Summary
+## Title & Summary
 - Project name: Home SOC Lab: AD + Sysmon + Splunk Detection Pipeline
-- Summary: A short 2-3 sentence description of what you built and why (e.g., simulate a small enterprise environment to practice detection engineering, incident response, and adversary emulation).
+- Summary:This project simulates a small enterprise environment to practice detection engineering and incident response from the ground up. I built an Active Directory domain (mubbyspark1.local) with a domain controller and joined client, deployed Sysmon for endpoint telemetry, and forwarded logs into a Splunk indexer using the Universal Forwarder. To validate the pipeline, I simulated real attack techniques including a brute force login attack and Atomic Red Team techniques like account creation and built a scheduled Splunk alert to detect failed logon activity (Event ID 4625), confirming end-to-end detection from raw event to triggered alert.
 
-## 2. Objectives
-- What you set out to learn/prove (e.g., build an AD environment, ingest logs into Splunk, simulate real attack techniques, and validate detections).
+## Objectives
 
-## 3. Architecture / Lab Environment
+- Build a functioning Active Directory environment, including domain controller setup and client domain join
+- Deploy Sysmon for endpoint telemetry and forward logs into Splunk
+- Simulate real attack techniques (brute force login, Atomic Red Team account creation) to generate detectable activity
+- Build and validate a working Splunk alert to detect suspicious activity end-to-end
+- Troubleshoot real infrastructure issues as they came up — AD rebuild, DNS trust relationships, alert scheduling conflicts — rather than following a scripted walkthrough
+- 
+# Architecture / Lab Environment
+/your-repo
+  /images
+    architecture-diagram.png
+  README.md
 - Diagram showing: Windows Server (DC) ↔ Windows Client ↔ Splunk indexer
 - Tools used: Windows Server 2022, Sysmon, Splunk Universal Forwarder + Splunk indexer, Atomic Red Team
 - Network setup (IP scheme, domain name `mubbyspark1.local`, etc.)
